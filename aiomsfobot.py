@@ -14,7 +14,7 @@ company_list = ['Газпром', 'Сбербанк', 'Алроса', 'ТГК-1'
 
 
 # Объект бота
-bot = Bot(token="2008374333:AAE-HcREZx4eCUHCtu5-2TFF77gVdO4f9gQ")
+bot = Bot(token="")
 # Диспетчер для бота
 #добавил хранилище в диспетчер
 dp = Dispatcher(bot, storage = MemoryStorage())
