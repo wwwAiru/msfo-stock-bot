@@ -32,7 +32,7 @@ def query_db(user_query,info):
 # Хэндлер на команду /start
 @dp.message_handler(commands="start")
 async def cmd_start(message: types.Message):
-    await message.answer("Вас приветствует бот-помошник. Вы пожете получить последний отчёт компании МСФО/РСБУ.\nВведите название компании :")
+    await message.answer("Вас приветствует бот-помошник. Вы можете получить последний отчёт компании МСФО/РСБУ.\nВведите название компании :")
 
 #функция инлайновой клавиатуры с кнопками краткий отчёт и полный отчёт
 async def response_data(param):
