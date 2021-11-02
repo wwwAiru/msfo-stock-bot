@@ -4,26 +4,40 @@ import json
 import sqlite3
 from thefuzz import fuzz        #подключил модули из библиотеки->
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
+import os
+from decimal import Decimal, getcontext
 
+with open('cryptlist.txt', 'r', encoding="utf-8") as f:
+    crypt_file = f.read()
+#преобразуем файл в список
+crypt_list = crypt_file.split(', ')
 
-
+getcontext().prec = 15
 
 def coin_request(user_msg):
+#открываем файл
+
+#сравниваем пользовательский месадж со списком
+    corrected_query = process.extractOne(user_msg, crypt_list)
+    print(corrected_query)
+#получаем кортеж с самым совпадающим значением и процентом совпадения
+#используем для запроса в бд чтобы получиь id
     try:
         connct = sqlite3.connect('ms.db3')
         connct.row_factory = lambda cursor, row: row[0]
         curs = connct.cursor()
-        curs.execute(f'SELECT symbol FROM crypt;')
-        db_str = curs.fetchall()
-        connct.close()
-    except (ConnectionError, Timeout, TooManyRedirects) as e:
-        print(e)
-    #print(db_str)
-    crypt_name = process.extractOne(user_msg, db_str)
+        curs.execute(f'SELECT id FROM crypt WHERE symbol="{corrected_query[0]}" OR name="{corrected_query[0]}";') #запрос по имени крипты после правки неточности
+        db_id = curs.fetchone()
+    except sqlite3.Error as error:
+        print(error)
+    finally:
+        if (connct):
+            connct.close()
+            print("Соединение с SQLite закрыто")
+    print(db_id)
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
-    print(crypt_name)
     parameters = {
-        'symbol': crypt_name[0],
+        'id': db_id,
     }
     headers = {
         'Accepts': 'application/json',
@@ -32,15 +46,18 @@ def coin_request(user_msg):
     session = Session()
     session.headers.update(headers)
     response = session.get(url, params=parameters)
-    data = json.loads(response.text)['data'][crypt_name[0]]
-    if data['quote']['USD']['price'] > 0:
-        round_price = round(data['quote']['USD']['price'], 3)
+    data = json.loads(response.text)['data'][str(db_id)]
+    number = Decimal(data['quote']['USD']['price'])
+    if number < 0.01:
+        retrr = number.quantize(Decimal("0.00000001"))
+    elif number < 0.5:
+        retrr = number.quantize(Decimal("0.0001"))
+    else:
+        retrr = number.quantize(Decimal("0.01"))
 
-    return f"""{data['name']} \nЦена: {round_price}
-    \nСуточный объём торгов: {round(data['quote']['USD']['volume_24h'],2)} 
+#делаем человекочитаемый вывод данных. в суточный объём торгов добавил разделитель-запятую т.к. числа большие
+    return f"""{data['name']} ({data['symbol']}) \nЦена: {retrr}$
+    \nСуточный объём торгов: {round(data['quote']['USD']['volume_24h']):,}$
     \nИзменение цены за сутки {round(data['quote']['USD']['percent_change_24h'],2)}%"""
 
-"""schedule.every(1).minutes.do(coin_request)
-while True:
-    schedule.run_pending()
-    time.sleep(1)"""
+
