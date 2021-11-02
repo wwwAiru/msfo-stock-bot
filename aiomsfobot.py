@@ -1,4 +1,3 @@
-
 import logging
 from thefuzz import fuzz        #подключил модули из библиотеки->
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
@@ -8,6 +7,10 @@ from aiogram.dispatcher import FSMContext       #импорт библиотек
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from coinmarketcap import coin_request
+
+
+
+
 #список компаний для функции корректировки некорректного запроса пользователя
 #в последующем можно забирать из базы данных или считывать из файла
 company_list = ['Газпром', 'Сбербанк', 'Алроса', 'ТГК-1', 'Московская биржа']
@@ -21,7 +24,7 @@ def query_db(user_query,info):
     return str[0][0]        # поэтому получаем доступ к данным по индексу в списке и индексу в кортеже
 
 # Объект бота
-bot = Bot(token='2008374333:AAE-HcREZx4eCUHCtu5-2TFF77gVdO4f9gQ')
+bot = Bot(token='2008374333:AAE-HcREZx4eCUHCtu5-2TFF77gVdO4f9gQ', parse_mode=types.ParseMode.HTML)
 # Диспетчер для бота
 #добавил хранилище в диспетчер
 dp = Dispatcher(bot, storage = MemoryStorage())
@@ -59,7 +62,7 @@ async def cmd_crypt(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_crypto)
 async def cmd_crypt_answer(message: types.Message, state: FSMContext):
-    await message.answer(coin_request(message.text))
+    await message.answer(f'<b>{coin_request(message.text)}</b>')
 
 
 #декоратор функция ожидающая пользовательский ввод на команду /Отчёт
