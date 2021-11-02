@@ -7,16 +7,17 @@ from thefuzz import process     #->fuzzywuzzy для обработки нето
 import os
 from decimal import Decimal, getcontext
 
+
+
+#открываем файл для чтения в список
 with open('cryptlist.txt', 'r', encoding="utf-8") as f:
     crypt_file = f.read()
 #преобразуем файл в список
 crypt_list = crypt_file.split(', ')
-
+#значение precision в getcontext устанавливает лимит округления для decimal
 getcontext().prec = 15
 
 def coin_request(user_msg):
-#открываем файл
-
 #сравниваем пользовательский месадж со списком
     corrected_query = process.extractOne(user_msg, crypt_list)
     print(corrected_query)
@@ -24,9 +25,11 @@ def coin_request(user_msg):
 #используем для запроса в бд чтобы получиь id
     try:
         connct = sqlite3.connect('ms.db3')
+#преобразуем курсор для того чтобы получать значения в виде простого списка        
         connct.row_factory = lambda cursor, row: row[0]
         curs = connct.cursor()
-        curs.execute(f'SELECT id FROM crypt WHERE symbol="{corrected_query[0]}" OR name="{corrected_query[0]}";') #запрос по имени крипты после правки неточности
+#запрос по тикеру или имени крипты после правки неточности        
+        curs.execute(f'SELECT id FROM crypt WHERE symbol="{corrected_query[0]}" OR name="{corrected_query[0]}";') 
         db_id = curs.fetchone()
     except sqlite3.Error as error:
         print(error)
@@ -34,8 +37,8 @@ def coin_request(user_msg):
         if (connct):
             connct.close()
             print("Соединение с SQLite закрыто")
-    print(db_id)
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+#полученный из бд id подставляем в параметры api запроса    
     parameters = {
         'id': db_id,
     }
@@ -46,7 +49,8 @@ def coin_request(user_msg):
     session = Session()
     session.headers.update(headers)
     response = session.get(url, params=parameters)
-    data = json.loads(response.text)['data'][str(db_id)]
+#получаем данные в json виде и получаем доступ к ним по ключам    
+    data = json.loads(response.text)['data'][str(db_id)]    
     number = Decimal(data['quote']['USD']['price'])
     if number < 0.01:
         retrr = number.quantize(Decimal("0.00000001"))
