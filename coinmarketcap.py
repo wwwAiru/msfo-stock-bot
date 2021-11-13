@@ -35,7 +35,6 @@ def coin_request(user_msg):
     finally:
         if (connct):
             connct.close()
-            print("Соединение с SQLite закрыто")
     print(db_id)
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
     parameters = {
