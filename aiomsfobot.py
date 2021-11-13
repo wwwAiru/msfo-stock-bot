@@ -7,10 +7,7 @@ from aiogram.dispatcher import FSMContext       #импорт библиотек
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from coinmarketcap import coin_request
-
-
-
-
+from crypt_most_hype import coin_request_hype
 #список компаний для функции корректировки некорректного запроса пользователя
 #в последующем можно забирать из базы данных или считывать из файла
 company_list = ['Газпром', 'Сбербанк', 'Алроса', 'ТГК-1', 'Московская биржа']
@@ -32,10 +29,11 @@ dp = Dispatcher(bot, storage = MemoryStorage())
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
+#класс для машины состояний
 class User_choise(StatesGroup):
     waiting_for_msfo = State()
     waiting_for_crypto = State()
-#отслеживание любых состояний для отмены из любого состояния FSM
+    waiting_for_crypt_hype = State()
 
 # Функция на команду /start
 @dp.message_handler(state='*', commands='Start')
@@ -43,8 +41,8 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("""Вас приветствует бот-помошник. Вы можете получить последний отчёт компании МСФО/РСБУ.
     \nТак же Вы можете узнать курс любой криптовалюты в текущий момент. Воспользуйтесь кнопками ниже.""")
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ['/Отчёт', "/Криптовалюта", '/start']
-    keyboard.add(buttons[0]).add(buttons[1]).add(buttons[2])
+    buttons = ['/Отчёт МСФО/РСБУ', '/Криптовалюта', '/Топ_10_активных', '/start']
+    keyboard.add(buttons[0]).add(buttons[1],buttons[2]).add(buttons[3])
     await state.finish()
     await message.answer('Что выбираете?', reply_markup=keyboard)
 
@@ -53,11 +51,19 @@ async def cmd_start(message: types.Message, state: FSMContext):
 async def cmd_msfo(message: types.Message, state: FSMContext):
     await message.answer('Введите название компании: ')
     await User_choise.waiting_for_msfo.set()
-
+    # Функция на команду /Криптовалюта
 @dp.message_handler(state='*', commands='Криптовалюта')
 async def cmd_crypt(message: types.Message, state: FSMContext):
     await message.answer('Введите название криптовалюты: ')
     await User_choise.waiting_for_crypto.set()
+    # Функция на команду /Криптовалюта
+@dp.message_handler(state='*', commands='Топ_10_активных')
+async def cmd_crypt_hype(message: types.Message, state: FSMContext):
+    await message.answer((coin_request_hype()))
+    await User_choise.waiting_for_crypt_hype.set()
+
+
+
 
 
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_crypto)
@@ -110,15 +116,6 @@ async def callback_inline_menu(call: types.CallbackQuery, state: FSMContext):
     elif call.data == 'long':
         result = await state.get_data()     #получаю переменную из state memory storage
         await call.message.answer(query_db(result['company_name'], 'long_info'))  # выдается полный отчёт
-
-
-
-""""#сохранение фото на компьютер
-@dp.message_handler(content_types=['photo'])
-async def download_photo(message: types.Message):
-    await message.photo[-1].download(destination_dir='Photo')"""
-dp.register_message_handler(cmd_start, commands='Start', state='*')
-
 
 
 # Запуск бота
