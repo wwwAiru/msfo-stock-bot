@@ -10,7 +10,7 @@ def coin_request_hype():
         #connct.row_factory = lambda cursor, row: row[0]
         curs = connct.cursor()
         curs.execute(f'''SELECT name, symbol, volume_24h/market_cap, price FROM crypt_hype 
-        WHERE volume_24h/market_cap>=0.4 AND name!="Tether" AND name!="USDK" 
+        WHERE volume_24h/market_cap>=0.4 AND name!="Tether" name NOT LIKE "%USD%" 
         ORDER BY volume_24h/market_cap DESC
         LIMIT 10;''')
         db_result = curs.fetchall()
