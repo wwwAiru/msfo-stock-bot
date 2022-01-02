@@ -33,7 +33,6 @@ logging.basicConfig(level=logging.INFO)
 class User_choise(StatesGroup):
     waiting_for_msfo = State()
     waiting_for_crypto = State()
-    waiting_for_crypt_hype = State()
 
 # Функция на команду /start
 @dp.message_handler(state='*', commands='Start')
@@ -41,7 +40,7 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("""Вас приветствует бот-помошник. Вы можете получить последний отчёт компании МСФО/РСБУ.
     \nТак же Вы можете узнать курс любой криптовалюты в текущий момент. Воспользуйтесь кнопками ниже.""")
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ['/Отчёт МСФО/РСБУ', '/Криптовалюта', '/Топ_10_активных', '/start']
+    buttons = ['/Отчёт МСФО/РСБУ', '/Криптовалюта', '/Топ_активных', '/start']
     keyboard.add(buttons[0]).add(buttons[1],buttons[2]).add(buttons[3])
     await state.finish()
     await message.answer('Что выбираете?', reply_markup=keyboard)
@@ -54,24 +53,19 @@ async def cmd_msfo(message: types.Message, state: FSMContext):
     # Функция на команду /Криптовалюта
 @dp.message_handler(state='*', commands='Криптовалюта')
 async def cmd_crypt(message: types.Message, state: FSMContext):
-    await message.answer('Введите название криптовалюты: ')
+    await message.answer('Введите название криптовалюты целиком или тикер (только латинские символы): ')
     await User_choise.waiting_for_crypto.set()
-    # Функция на команду /Криптовалюта
-@dp.message_handler(state='*', commands='Топ_10_активных')
+    # Функция на команду /Топ_активных
+@dp.message_handler(state='*', commands='Топ_активных')
 async def cmd_crypt_hype(message: types.Message, state: FSMContext):
     await message.answer((coin_request_hype()))
-    await User_choise.waiting_for_crypt_hype.set()
-
-
-
-
-
+    await User_choise.waiting_for_crypto.set()
+    #обработчик ввода названия криптовалюты
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_crypto)
 async def cmd_crypt_answer(message: types.Message, state: FSMContext):
     await message.answer(f'<b>{coin_request(message.text)}</b>')
 
-
-#декоратор функция ожидающая пользовательский ввод на команду /Отчёт
+#обработчик ожидающая пользовательский ввод на команду /Отчёт
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_msfo)
 async def query_comp(message: types.Message, state: FSMContext):
 # тут начинается корректировка неточного запроса пользователя
