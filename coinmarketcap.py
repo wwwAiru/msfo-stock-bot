@@ -6,6 +6,7 @@ from thefuzz import fuzz        #подключил модули из библи
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
 import os
 from decimal import Decimal, getcontext
+from aiogram.utils import markdown
 
 
 
@@ -35,6 +36,7 @@ def coin_request(user_msg):
     finally:
         if (connct):
             connct.close()
+            print("Соединение с SQLite закрыто")
     print(db_id)
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
     parameters = {
