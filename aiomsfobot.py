@@ -3,6 +3,7 @@ from thefuzz import fuzz        #подключил модули из библи
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
 import sqlite3                  #импорт библиотеки для работы с БД
 from aiogram import Bot, Dispatcher, executor, types
+
 from aiogram.dispatcher import FSMContext       #импорт библиотек для машины состояний
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
@@ -50,27 +51,33 @@ async def cmd_start(message: types.Message, state: FSMContext):
 async def cmd_msfo(message: types.Message, state: FSMContext):
     await message.answer('Введите название компании: ')
     await User_choise.waiting_for_msfo.set()
-    # Функция на команду /Криптовалюта
+
+
+# Функция на команду /Криптовалюта
 @dp.message_handler(state='*', commands='Криптовалюта')
 async def cmd_crypt(message: types.Message, state: FSMContext):
     await message.answer('Введите название криптовалюты целиком или тикер (только латинские символы): ')
     await User_choise.waiting_for_crypto.set()
-    # Функция на команду /Топ_активных
+
+
+# Функция на команду /Топ_активных
 @dp.message_handler(state='*', commands='Топ_активных')
 async def cmd_crypt_hype(message: types.Message, state: FSMContext):
-    await message.answer((coin_request_hype()))
+    await message.answer(coin_request_hype())
     await User_choise.waiting_for_crypto.set()
-    #обработчик ввода названия криптовалюты
+
+
+# Обработчик ввода названия криптовалюты
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_crypto)
 async def cmd_crypt_answer(message: types.Message, state: FSMContext):
     await message.answer(f'<b>{coin_request(message.text)}</b>')
 
-#обработчик ожидающая пользовательский ввод на команду /Отчёт
+# Обработчик ожидающая пользовательский ввод на команду /Отчёт
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_msfo)
 async def query_comp(message: types.Message, state: FSMContext):
 # тут начинается корректировка неточного запроса пользователя
     company_name = process.extractOne(message.text, company_list)
-#записываю в MemoryStorage переменную чтобы отправить в другой хэндлер
+# записываю в MemoryStorage переменную чтобы отправить в другой хэндлер
     async with state.proxy() as data:
         data['company_name'] = company_name[0]
 # так как process.excractOne возвращает список, то получаем доступ к его значениям по индексам
