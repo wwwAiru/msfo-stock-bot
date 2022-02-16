@@ -7,7 +7,6 @@ import sqlite3
 
 
 def update_crypt_hype():
-
     url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest'
     #тут указывается лимит количества результатов(больше 5000 нельзя) для пагинации меняется параметр start
     parameters = {
@@ -42,6 +41,5 @@ def update_crypt_hype():
     finally:
         if (conn):
             conn.close()
-            print("Соединение с SQLite закрыто.")
     print("Таблица crypt_hype обновлена.")
 
