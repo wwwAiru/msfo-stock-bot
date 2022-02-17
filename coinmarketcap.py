@@ -1,12 +1,9 @@
-from requests import Request, Session
-from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
+from requests import Session
 import json
 import sqlite3
-from thefuzz import fuzz        #подключил модули из библиотеки->
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
-import os
 from decimal import Decimal, getcontext
-from aiogram.utils import markdown
+
 
 
 

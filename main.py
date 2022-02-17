@@ -1,77 +1,51 @@
 import logging
-from thefuzz import fuzz        #подключил модули из библиотеки->
 from thefuzz import process     #->fuzzywuzzy для обработки неточных соответствий
-import sqlite3                  #импорт библиотеки для работы с БД
 from aiogram import Bot, Dispatcher, executor, types
-
 from aiogram.dispatcher import FSMContext       #импорт библиотек для машины состояний
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from api import response_c_list, c_info
 from coinmarketcap import coin_request
 from crypt_most_hype import coin_request_hype
-#список компаний для функции корректировки некорректного запроса пользователя
-#в последующем можно забирать из базы данных или считывать из файла
-company_list = [
-        "Fix price",
-        "OZON",
-        "Polymetal",
-        "X5 Retail Group",
-        "Алроса",
-        "Аэрофлот",
-        "ВТБ",
-        "ГМК Норильский никель",
-        "Газпром",
-        "Детский мир",
-        "ЛСР",
-        "Лента",
-        "М.видео",
-        "ММК",
-        "Магнит",
-        "Московская биржа",
-        "НЛМК",
-        "Новатек",
-        "Обувь России",
-        "Петропавловск",
-        "Распадская",
-        "Русагро",
-        "СПБ Биржа",
-        "Самолет",
-        "Сбербанк",
-        "Транснефть",
-        "Фосагро"]
 
-#создал функцию запроса в базу данных
-def query_db(user_query,info):
-    conn = sqlite3.connect('msfo.db3')
-    cur = conn.cursor()
-    cur.execute(f'SELECT {info} FROM msfo WHERE name="{user_query}";')
-    str = cur.fetchall()    # fetchall возвращает список кортежей [(),(),(),()]
-    return str[0][0]        # поэтому получаем доступ к данным по индексу в списке и индексу в кортеже
+
 
 # Объект бота
 bot = Bot(token='2008374333:AAE-HcREZx4eCUHCtu5-2TFF77gVdO4f9gQ', parse_mode=types.ParseMode.HTML)
-# Диспетчер для бота
-#добавил хранилище в диспетчер
-dp = Dispatcher(bot, storage = MemoryStorage())
+# диспетчер бота
+# добавил хранилище в диспетчер
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
-#класс для машины состояний
+# класс для машины состояний
 class User_choise(StatesGroup):
     waiting_for_msfo = State()
     waiting_for_crypto = State()
 
 # Функция на команду /start
-@dp.message_handler(state='*', commands='Start')
+@dp.message_handler(state='*', commands='start')
 async def cmd_start(message: types.Message, state: FSMContext):
-    await message.answer("""Вас приветствует бот-помошник. Вы можете получить последний отчёт компании МСФО/РСБУ.
-    \nТак же Вы можете узнать курс любой криптовалюты в текущий момент. Воспользуйтесь кнопками ниже.""")
+    await message.answer("""
+    Вас приветствует бот-помошник для инвесторов и биржевых спекулянтов. \n
+    Чтобы получить последний отчёт компании МСФО/РСБУ нажмите <b>'/Отчёт'</b> и введите название компании.\n 
+    Узнать по каким компаниям есть отчёты, нажмите <b>'/Список компаний'</b>\n
+    Узнать курс криптовалюты в данный момент, нажмите <b>'/Криптовалюта'</b> и введите название криптовалюты.\n
+    Узнать топ самых торгуемых криптовалют, нажмине <b>'/Топ активных'</b>
+    """)
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ['/Отчёт МСФО/РСБУ', '/Криптовалюта', '/Топ_активных', '/start']
-    keyboard.add(buttons[0]).add(buttons[1],buttons[2]).add(buttons[3])
+    buttons = ['/Список компаний', '/Отчёт МСФО/РСБУ', '/Криптовалюта', '/Топ активных', '/Start']
+    keyboard.add(buttons[0]).add(buttons[1]).add(buttons[2], buttons[3]).add(buttons[4])
+    await message.answer('Воспользуйтесь кнопками-коммандами', reply_markup=keyboard)
     await state.finish()
-    await message.answer('Что выбираете?', reply_markup=keyboard)
+
+# Функция на команду /Список_компаний
+@dp.message_handler(state='*', commands='Список')
+async def cmd_list(message: types.Message, state: FSMContext):
+    await User_choise.waiting_for_msfo.set()
+    await message.answer(",  ".join(response_c_list()))
+
 
 # Функция на команду /Отчёт
 @dp.message_handler(state='*', commands='Отчёт')
@@ -88,7 +62,7 @@ async def cmd_crypt(message: types.Message, state: FSMContext):
 
 
 # Функция на команду /Топ_активных
-@dp.message_handler(state='*', commands='Топ_активных')
+@dp.message_handler(state='*', commands='Топ')
 async def cmd_crypt_hype(message: types.Message, state: FSMContext):
     await message.answer(coin_request_hype())
     await User_choise.waiting_for_crypto.set()
@@ -103,7 +77,7 @@ async def cmd_crypt_answer(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=['text'], state=User_choise.waiting_for_msfo)
 async def query_comp(message: types.Message, state: FSMContext):
 # тут начинается корректировка неточного запроса пользователя
-    company_name = process.extractOne(message.text, company_list)
+    company_name = process.extractOne(message.text, response_c_list())
 # записываю в MemoryStorage переменную чтобы отправить в другой хэндлер
     async with state.proxy() as data:
         data['company_name'] = company_name[0]
@@ -140,10 +114,10 @@ async def callback_inline_menu(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer('Попробуйте ещё раз')
     elif call.data == 'short':
         result = await state.get_data()     #получаю переменную из state memory storage
-        await call.message.answer(query_db(result['company_name'], 'short_info'))  # выдается краткий отчёт
+        await call.message.answer(c_info(result['company_name'], 'short_info'))  # выдается краткий отчёт
     elif call.data == 'long':
         result = await state.get_data()     #получаю переменную из state memory storage
-        await call.message.answer(query_db(result['company_name'], 'long_info'))  # выдается полный отчёт
+        await call.message.answer(c_info(result['company_name'], 'long_info'))  # выдается полный отчёт
 
 
 # Запуск бота
