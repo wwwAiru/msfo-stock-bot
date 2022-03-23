@@ -16,5 +16,8 @@ ___________
 3. Криптовалюта - выдаёт информацию по криптовалюте: цену, капитализацию, суточный объём торгов, динамику изменения цены в % за сутки.
 4. Топ активных - выдаёт список криптовалют по наибольшему объёму торгов, список не более 10 криптовалют.
 
-
-
+![1](https://user-images.githubusercontent.com/92391770/159768636-4571a28f-31fa-42a5-811a-5f0cc1f152b0.jpg)
+![2](https://user-images.githubusercontent.com/92391770/159768640-f16161fb-43a5-46f8-a5fd-cad6af208d6d.jpg)
+![3](https://user-images.githubusercontent.com/92391770/159768642-52db6b03-adc8-46e3-850b-08c32f69c4aa.jpg)
+![4](https://user-images.githubusercontent.com/92391770/159768643-333eb1e7-32e1-4f88-80b6-64f0fbd130bc.jpg)
+![5](https://user-images.githubusercontent.com/92391770/159768648-31101147-8156-4ca6-b6c1-bd3b9e32fb68.jpg)
